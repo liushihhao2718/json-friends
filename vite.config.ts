@@ -8,5 +8,6 @@ export default defineConfig({
   plugins: [vue(), vueJsx()],
   build: {
     outDir:'./docs'
-  }
+  },
+  base: '/json-friends'
 })
