@@ -68,18 +68,18 @@
             </n-card>
             </n-collapse-item>
           </n-collapse>
-          <component style="margin-top: 15px;" :is="() => json_pointer_render(search_str, table_data)" />
 
-            <div
+          <component style="margin: 1rem auto; display: block;" :is="() => json_pointer_render(search_str, table_data)" />
+
+          <div
             style="margin-top: 5px;"
-            v-if="search_value.length > 0">
+            v-if="search_value?.length > 0">
             <label>JSON</label>
             <n-input
-          
-          v-model:value="search_value"
-          type="textarea"
-        />
-            </div>
+              v-model:value="search_value"
+              type="textarea"
+            />
+          </div>
           
         </div>
       </n-flex>
@@ -164,7 +164,9 @@ async function togglePannel(index: number) {
 function json_render(str: string) {
   try {
     table_data = JSON5.parse(str);
-
+    
+    // const formatted = JSON.stringify(table_data, null, 4);
+    // input_str.value = formatted;
     localStorage.setItem("input_str", str);
 
   } catch (e) {
@@ -200,6 +202,32 @@ function table_render_click(obj, json_pointer='') {
       </NTable>
     );
   }
+
+  if(obj.type == 'sameArrayField'){
+    return (
+      <NTable single-line={false} size="small">
+        <thead>
+          <tr>
+            {
+              obj.value[0].type === 'Object' ? obj.value[0].value.map(key => <th>{key.name}</th>)
+              : <th>{obj.value[0].type}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          {
+            obj.value.map((v, v_i) => <tr>{
+              v.type === 'Object' ?
+              v.value.map(vv => <td>{table_render_click(vv.value, `${json_pointer}/${v_i}${vv.value.type == 'Primitive' ? '': '/'+vv.name}`)}</td>)
+              : <td>{table_render_click(v, `${json_pointer}/${v_i}`)}</td>
+            }</tr>)
+            
+          }
+        </tbody>
+      </NTable>
+    );
+  }
+
   if (obj.type == "Object") {
     return (<NTable single-line={false} size="small">
         <tr data-pointer={json_pointer} onClick={e=> update_search(e, json_pointer)}>
@@ -222,7 +250,7 @@ function table_render_click(obj, json_pointer='') {
   }
 
   if (obj.type == "Primitive") 
-    return <span onClick={e=> update_search(e, json_pointer.split('/').slice(0, -1).join('/'))}>
+    return <span onClick={e=> update_search(e, json_pointer)}>
       {obj.value.toString()}</span>;
 }
 
@@ -247,6 +275,33 @@ function table_render(obj) {
       </NTable>
     );
   }
+
+  if(obj.type == 'sameArrayField'){
+    return (
+      <NTable single-line={false} size="small">
+        <thead>
+          <tr>
+            {
+              obj.value[0].type === 'Object' ? 
+                obj.value[0].value.map(key => <th>{key.name}</th>)
+                : <th>{obj.value[0].type}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          {
+            obj.value.map(v => <tr>{
+              v.type === 'Object' ?
+              v.value.map(vv => <td>{table_render(vv.value)}</td>)
+              : <td>{table_render(v)}</td>
+            }</tr>)
+            
+          }
+        </tbody>
+      </NTable>
+    );
+  }
+
   if (obj.type == "Object") {
     return (<NTable single-line={false} size="small">
         <tr>
@@ -275,8 +330,11 @@ function obj2Table(obj: any) {
   if (obj === "") return "string";
 
   if (Array.isArray(obj)) {
+    if(sameArrayField(obj))
+    console.log('sameArrayField', obj.map((o) => obj2Table(o)))
+
     return {
-      type: "Array",
+      type: sameArrayField(obj) ? "sameArrayField" : "Array",
       value: obj.map((o) => obj2Table(o)),
     };
   }
@@ -300,6 +358,8 @@ function obj2Table(obj: any) {
     };
   }
 }
+
+
 
 function isPrimitive(str) {
   return [
@@ -334,6 +394,14 @@ function json_pointer_render(pointer_str, target_obj){
     return <p>{e.toString()}</p>
   }
 
+}
+
+function sameArrayField(arr: Array<any>) {
+  return arr
+    .map(obj => Object.keys(obj).join('|'))
+    .every((val, i, arr) => val === arr[0] )
+    && !Array.isArray(arr[0])
+    && arr.length > 1
 }
 </script>
 <style>
