@@ -92,19 +92,21 @@ import { Splitpanes, Pane } from "splitpanes";
 import "splitpanes/dist/splitpanes.css";
 import { NButton, NFlex, NInput, NIcon, NTable, NAutoComplete,NCollapse, NCollapseItem, NCard } from "naive-ui";
 import { Play } from "@vicons/ionicons5";
-import { ref, h , computed} from "vue";
+import { ref, h , computed, watch} from "vue";
 import JSON5 from "json5";
 import json_pointer from "json-pointer";
 
 import sidebar_left_svg from "../assets/icon/sidebar-left.svg";
 import sidebar_right_svg from "../assets/icon/sidebar-right.svg";
-let table_data;
+let table_data = ref(null);
 const input_str = ref(localStorage.getItem("input_str")||"");
 const search_str = ref("");
 const search_auto_complete_options = computed(()=>{
 
   const search = search_str.value == '/' ? '' : search_str.value;
-  const sub_value = save_json_pointer_get(search, table_data);
+  const sub_value = save_json_pointer_get(search, table_data.value);
+
+  if(!sub_value) return []
 
   console.log('sub_value', sub_value)
   if(Array.isArray(sub_value)){
@@ -116,7 +118,7 @@ const search_auto_complete_options = computed(()=>{
 
 
 const search_value = computed(()=>{
-return JSON.stringify( save_json_pointer_get(search_str.value, table_data), null, 2 );
+return JSON.stringify( save_json_pointer_get(search_str.value, table_data.value), null, 2 );
 })
 
 const json_table_pannels = JSON.parse(
@@ -163,16 +165,17 @@ async function togglePannel(index: number) {
 
 function json_render(str: string) {
   try {
-    table_data = JSON5.parse(str);
+    table_data.value = JSON5.parse(str);
     
     // const formatted = JSON.stringify(table_data, null, 4);
     // input_str.value = formatted;
     localStorage.setItem("input_str", str);
 
+    search_str.value = search_str.value+''; 
   } catch (e) {
-    table_data = null;
+    table_data.value = null;
   }
-  return table_render_click(obj2Table(table_data));
+  return table_render_click(obj2Table(table_data.value));
 }
 
 
