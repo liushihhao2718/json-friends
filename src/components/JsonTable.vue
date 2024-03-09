@@ -4,15 +4,17 @@
       justify="space-between"
       style="padding: 4px 6px; flex-grow: 1;  border-bottom: 1px solid var(--n-border-color);"
     >
-      <n-flex justify="start" style="column-gap: 2px">
-        <n-button @click="togglePannel(0)" style="align-items: center;">
+      <n-flex justify="start" style="column-gap: 2px;align-items: center;">
+        <n-button @click="togglePannel(0)">
         <n-icon size="24">
           <img :src="sidebar_left_svg" style="width: 100%;"></img>
         </n-icon>
         </n-button>
-        <n-button
+        <n-button @click="run()"
           >Run <n-icon size="20" style="margin-left: 5px"> <play /> </n-icon
         ></n-button>
+        <n-checkbox size="small" label="auto" v-model:checked="auto_run"/>
+
       </n-flex>
 
       <n-button justify="end" @click="togglePannel(2)"> 
@@ -23,10 +25,10 @@
     </n-flex>
 
     <splitpanes style="height: calc(100% - var(--header-height));">
-      <pane :size="pannels[0].size" style="">
+      <pane :size="pannels[0].size">
         <n-input
           style="height: 100%; overflow: scroll"
-          v-model:value="input_str"
+          v-model:value="run_str"
           type="textarea"
           placeholder='JSON Text { "a" : "123" }'
         />
@@ -37,18 +39,26 @@
       <pane :size="pannels[2].size" style="height: 100%; align-items: flex-start;">
         <n-flex vertical style="height: 100%; width: 100%; overflow: scroll;">
         <div style="display: block;width: calc(100% - 20px);margin: 10px auto;">
-          <n-auto-complete
-            style="margin-bottom: 15px;" 
-            v-model:value="search_str"
-            :input-props="{
-              autocomplete: 'disabled'
-            }"
-            :options="search_auto_complete_options"
-            placeholder="JSON Pointer e.g. /foo/bar/0"
-            clearable
-          />
+          <n-flex style="flex-direction: row;">
+            <n-select id="test" v-model:value="query_current_select" 
+              v-bind:style="{
+                width: `calc(${Math.max(...query_options.map(q => q.label.length))/1.3}rem)`,
+              }"
+              :options="query_options" />
+
+            <n-auto-complete
+              style="margin-bottom: 15px; width: max-content; flex-grow: 1;" 
+              v-model:value="search_str"
+              :input-props="{
+                autocomplete: 'disabled'
+              }"
+              :options="search_auto_complete_options"
+              placeholder="JSON Pointer e.g. /foo/bar/0"
+              clearable
+            />
+          </n-flex>
           <n-collapse>
-            <n-collapse-item title="What's JSON Pointer?" name="1">
+            <n-collapse-item v-if="query_current_select == 'JSON Pointer'" title="What's JSON Pointer?" name="1">
               <n-card title="Example">
               <p>A JSON Pointer is a list of zero-to-many tokens, each prefixed by <code>/</code>. Each token can be a string or a number. For example, given a JSON: </p>
               <div class="fragment">
@@ -65,11 +75,62 @@
                 <li><code>"/pi"</code> → <code>3.1416</code></li>
               </ol>
               <p>Note that, an empty JSON Pointer <code>""</code> (zero token) resolves to the whole JSON.</p>
+              <a href="https://rapidjson.org/md_doc_pointer.html">https://rapidjson.org/md_doc_pointer.html</a>
             </n-card>
+            </n-collapse-item>
+
+            <n-collapse-item v-else-if="query_current_select == 'JSON Path'"
+            title="JSONPath - XPath for JSON" name="1">
+              <n-card title="Example"><pre style="margin: 0;"><code class="lang-json"><span>{
+    <span class="hljs-attr">"Source"</span>: <span class="hljs-string">"Server-01"</span>,
+    <span class="hljs-attr">"Timestamp"</span>: <span class="hljs-string">"2023-07-25T09:15:32.123Z"</span>,
+    <span class="hljs-attr">"Log Level"</span>: <span class="hljs-string">"INFO"</span>,
+    <span class="hljs-attr">"Message"</span>: <span class="hljs-string">"Application started successfully."</span>,
+    <span class="hljs-attr">"Details"</span>: {
+      <span class="hljs-attr">"Service"</span>: <span class="hljs-string">"AuthService"</span>,
+      <span class="hljs-attr">"Endpoint"</span>: <span class="hljs-string">"/api/login"</span>,
+      <span class="hljs-attr">"Response Code"</span>: <span class="hljs-number">200</span>,
+      <span class="hljs-attr">"Response Time"</span>: <span class="hljs-number">54.21</span>,
+      <span class="hljs-attr">"User"</span>: {
+        <span class="hljs-attr">"User ID"</span>: <span class="hljs-string">"user123"</span>,
+        <span class="hljs-attr">"Username"</span>: <span class="hljs-string">"kiana_anderson"</span>,
+        <span class="hljs-attr">"IP Address"</span>: <span class="hljs-string">"192.168.1.100"</span>
+      }
+    }
+  }</span>
+</code>
+</pre>
+<p>您可以使用 JSONPath 表示法來代表每個欄位，如下所示：</p>
+<pre class="has-inner-focus"><code class="lang-kusto" data-author-content="&quot;$.Source&quot;                     // Source field
+&quot;$.Timestamp&quot;                  // Timestamp field
+&quot;$['Log Level']&quot;               // Log Level field
+&quot;$.Message&quot;                    // Message field
+&quot;$.Details.Service&quot;            // Service field
+&quot;$.Details.Endpoint&quot;           // Endpoint field
+&quot;$.Details['Response Code']&quot;   // Response Code field
+&quot;$.Details['Response Time']&quot;   // Response Time field
+&quot;$.Details.User['User ID']&quot;    // User ID field
+&quot;$.Details.User.Username&quot;      // Username field
+&quot;$.Details.User['IP Address']&quot; // IP Address field
+"><span><span class="hljs-string">"$.Source"</span>                     <span class="hljs-comment">// Source field</span>
+<span class="hljs-string">"$.Timestamp"</span>                  <span class="hljs-comment">// Timestamp field</span>
+<span class="hljs-string">"$['Log Level']"</span>               <span class="hljs-comment">// Log Level field</span>
+<span class="hljs-string">"$.Message"</span>                    <span class="hljs-comment">// Message field</span>
+<span class="hljs-string">"$.Details.Service"</span>            <span class="hljs-comment">// Service field</span>
+<span class="hljs-string">"$.Details.Endpoint"</span>           <span class="hljs-comment">// Endpoint field</span>
+<span class="hljs-string">"$.Details['Response Code']"</span>   <span class="hljs-comment">// Response Code field</span>
+<span class="hljs-string">"$.Details['Response Time']"</span>   <span class="hljs-comment">// Response Time field</span>
+<span class="hljs-string">"$.Details.User['User ID']"</span>    <span class="hljs-comment">// User ID field</span>
+<span class="hljs-string">"$.Details.User.Username"</span>      <span class="hljs-comment">// Username field</span>
+<span class="hljs-string">"$.Details.User['IP Address']"</span> <span class="hljs-comment">// IP Address field</span>
+</span></code></pre>
+
+<a class="n-a" href="https://learn.microsoft.com/zh-tw/azure/data-explorer/kusto/query/jsonpath">https://learn.microsoft.com/zh-tw/azure/data-explorer/kusto/query/jsonpath</a>
+</n-card>
             </n-collapse-item>
           </n-collapse>
 
-          <component style="margin: 1rem auto; display: block;" :is="() => json_pointer_render(search_str, table_data)" />
+          <component style="margin: 1rem auto; display: block;" :is="() => json_table_render(search_str, table_data)" />
 
           <div
             style="margin-top: 5px;"
@@ -90,36 +151,61 @@
 <script setup lang="tsx">
 import { Splitpanes, Pane } from "splitpanes";
 import "splitpanes/dist/splitpanes.css";
-import { NButton, NFlex, NInput, NIcon, NTable, NAutoComplete,NCollapse, NCollapseItem, NCard } from "naive-ui";
+import { NButton, NFlex, NInput, NIcon, NTable, NAutoComplete,NCollapse, NCollapseItem, NCard,NCheckbox,NSelect, NA } from "naive-ui";
 import { Play } from "@vicons/ionicons5";
 import { ref, h , computed, watch} from "vue";
 import JSON5 from "json5";
 import json_pointer from "json-pointer";
+import jp from "jsonpath";
 
 import sidebar_left_svg from "../assets/icon/sidebar-left.svg";
 import sidebar_right_svg from "../assets/icon/sidebar-right.svg";
+
+const auto_run = ref(false);
+const run_str = ref(localStorage.getItem("input_str")||"");
 let table_data = ref(null);
-const input_str = ref(localStorage.getItem("input_str")||"");
+const input_str = ref('');
+
+
+const query_options = [ {
+                label: 'JSON Pointer',
+                value: 'JSON Pointer',
+              },
+              {
+                label: 'JSON Path',
+                value: 'JSON Path',
+              }]
+const query_current_select = ref(query_options[0].value);
+
 const search_str = ref("");
 const search_auto_complete_options = computed(()=>{
 
-  const search = search_str.value == '/' ? '' : search_str.value;
-  const sub_value = save_json_pointer_get(search, table_data.value);
+  if(query_current_select.value === 'JSON Pointer'){
+    const search = search_str.value == '/' ? '' : search_str.value;
+    const sub_value = save_json_pointer_get(search, table_data.value);
 
-  if(!sub_value) return []
+    if(!sub_value) return []
 
-  console.log('sub_value', sub_value)
-  if(Array.isArray(sub_value)){
-    return [search + '/0']
+    console.log('sub_value', sub_value)
+    if(Array.isArray(sub_value)){
+      return [search + '/0']
+    }
+
+    return Object.keys(sub_value).map(key => search + '/' + key)
   }
-
-  return Object.keys(sub_value).map(key => search + '/' + key)
+  
 })
 
-
-const search_value = computed(()=>{
-return JSON.stringify( save_json_pointer_get(search_str.value, table_data.value), null, 2 );
+watch([run_str, auto_run], async (old_value, new_value)=>{
+  if(auto_run.value)
+    run();
 })
+
+function run(){
+  input_str.value = run_str.value;
+}
+
+const search_value = ref('')
 
 const json_table_pannels = JSON.parse(
   localStorage.getItem("json_table_pannels") ||
@@ -167,8 +253,8 @@ function json_render(str: string) {
   try {
     table_data.value = JSON5.parse(str);
     
-    // const formatted = JSON.stringify(table_data, null, 4);
-    // input_str.value = formatted;
+    const formatted = JSON.stringify(table_data.value, null, 4);
+    run_str.value = formatted;
     localStorage.setItem("input_str", str);
 
     search_str.value = search_str.value+''; 
@@ -181,6 +267,7 @@ function json_render(str: string) {
 
 function update_search(e, json_pointer){
   e.stopPropagation();
+  query_current_select.value = 'JSON Pointer';
   search_str.value = json_pointer; 
   console.log(json_pointer);
 }
@@ -333,9 +420,7 @@ function obj2Table(obj: any) {
   if (obj === "") return "string";
 
   if (Array.isArray(obj)) {
-    if(sameArrayField(obj))
-    console.log('sameArrayField', obj.map((o) => obj2Table(o)))
-
+    
     return {
       type: sameArrayField(obj) ? "sameArrayField" : "Array",
       value: obj.map((o) => obj2Table(o)),
@@ -381,19 +466,32 @@ function isPrimitive(str) {
 function save_json_pointer_get(pointer_str, target_obj ){
   try{
     const pointer_obj = json_pointer.get(target_obj, pointer_str);
-    console.log('save_json_pointer_get', pointer_obj)
     return pointer_obj;
   }catch(e){
     return undefined;
   }
 }
-function json_pointer_render(pointer_str, target_obj){
+function json_table_render(pointer_str:string, target_obj:Object){
   try{
     if(!target_obj) return <p>empty object</p>
-    const pointer_obj = json_pointer.get(target_obj, pointer_str);
+
+    let pointer_obj;
+
+    switch (query_current_select.value) {
+      case 'JSON Pointer':
+      pointer_obj = json_pointer.get(target_obj, pointer_str);
+        break;
+      case 'JSON Path':
+      pointer_obj = jp.query(target_obj, pointer_str)
+      default:
+        break;
+    }
+    search_value.value = JSON.stringify(pointer_obj);
     return table_render(obj2Table(pointer_obj));
   }
   catch(e){
+    search_value.value = e;
+
     return <p>{e.toString()}</p>
   }
 
@@ -436,6 +534,9 @@ function sameArrayField(arr: Array<any>) {
   margin: auto;
 }
 
+.n-table.n-table--bordered tr:last-child td {
+  border-bottom: 1px solid var(--n-border-color);
+}
 td:first-child {
   width: 10%;
 }
