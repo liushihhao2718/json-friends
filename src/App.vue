@@ -1,7 +1,7 @@
 <template>
   <div class="wrapper">
-    <n-flex style="height: 100%; width: 100%; overflow: scroll;">
-      <n-layout has-sider style="height: 100%;">
+    <n-flex style="height: 100%; width: 100%; overflow: scroll">
+      <n-layout has-sider style="height: 100%">
         <n-layout-sider
           bordered
           show-trigger="arrow-circle"
@@ -18,12 +18,10 @@
             :collapsed-width="64"
             :collapsed-icon-size="22"
             :options="menuOptions"
-            @update:value="handleApp"	
+            @update:value="handleApp"
           />
         </n-layout-sider>
         <component :is="() => main_view_render()" />
-
-        
       </n-layout>
     </n-flex>
 
@@ -35,14 +33,11 @@
 import JsonTable from "./components/JsonTable.vue";
 import JsonConvertor from "./components/JsonConvertor.vue";
 import "splitpanes/dist/splitpanes.css";
+import window_grid from "./assets/icon/window-grid.svg";
 import { NFlex, NLayout, NLayoutSider, NIcon, NMenu } from "naive-ui";
 
-import { h, ref, watch } from "vue";
-import {
-  GridOutline,
-} from "@vicons/ionicons5";
-
-
+import { h, ref } from "vue";
+import { PlayForward } from "@vicons/ionicons5";
 
 function renderIcon(icon) {
   return () => h(NIcon, null, { default: () => h(icon) });
@@ -52,33 +47,30 @@ const menuOptions = [
   {
     label: "Json to Table",
     key: "json2table",
-    icon: renderIcon(GridOutline),
+    icon: renderIcon(<img src={window_grid} style="width: 100%;"></img>),
   },
   {
     label: "Json Convert",
     key: "jsonConvertor",
-    icon: renderIcon(GridOutline),
-  }
+    icon: renderIcon(PlayForward),
+  },
 ];
 
-const current_view = ref('jsonConvertor')
-
+const current_view = ref("jsonConvertor");
 
 const siderOpen = ref(false);
 
+function handleApp(key: string, item: string) {
+  console.log(key);
 
-function handleApp(key: string, item:string){
-  console.log(key)
-  
   current_view.value = key;
 }
 
 function main_view_render(): JSX.Element {
   const main_view = {
-    "json2table": <JsonTable ></JsonTable>,
-    "jsonConvertor":<JsonConvertor></JsonConvertor>
-  }
-
+    json2table: <JsonTable></JsonTable>,
+    jsonConvertor: <JsonConvertor></JsonConvertor>,
+  };
 
   return main_view[current_view.value];
 }
@@ -104,7 +96,6 @@ body {
 footer {
   background-color: lightblue;
 }
-
 
 .n-scrollbar {
   overflow: visible;

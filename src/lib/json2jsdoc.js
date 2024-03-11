@@ -8,7 +8,9 @@ let levels = []
  * @param {string} key
  */
 export default function init(data, key = 'ObjectType') {
-
+  All_Keys = [];
+  typedef_comments = []
+  levels = []
 
   levels.push([key, objectKey(data)])
 
@@ -31,7 +33,7 @@ function jsdoc_gen(k, v) {
         ` */`].join('\n')
     )
   }
- 
+
   else {
 
     typedef_comments.push(
