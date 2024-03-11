@@ -10,26 +10,20 @@
           :width="240"
           :native-scrollbar="false"
           :collapsed="!siderOpen"
+          @collapse="siderOpen = false"
+          @expand="siderOpen = true"
         >
-          <n-button
-            class="toggle-button"
-            strong
-            secondary
-            circle
-            type="primary"
-            @click="toggleSider()"
-          >
-            <template #icon>
-              <n-icon><ArrowBackOutline /></n-icon>
-            </template>
-          </n-button>
           <n-menu
+            :value="current_view"
             :collapsed-width="64"
             :collapsed-icon-size="22"
             :options="menuOptions"
+            @update:value="handleApp"	
           />
         </n-layout-sider>
-        <JsonTable ></JsonTable>
+        <component :is="() => main_view_render()" />
+
+        
       </n-layout>
     </n-flex>
 
@@ -37,20 +31,18 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="tsx">
 import JsonTable from "./components/JsonTable.vue";
-import { Splitpanes, Pane } from "splitpanes";
+import JsonConvertor from "./components/JsonConvertor.vue";
 import "splitpanes/dist/splitpanes.css";
-import { NButton, NFlex, NLayout, NLayoutSider, NIcon, NMenu } from "naive-ui";
+import { NFlex, NLayout, NLayoutSider, NIcon, NMenu } from "naive-ui";
 
-import { h, ref } from "vue";
+import { h, ref, watch } from "vue";
 import {
-  BookOutline as BookIcon,
-  PersonOutline as PersonIcon,
-  WineOutline as WineIcon,
   GridOutline,
-  ArrowBackOutline,
 } from "@vicons/ionicons5";
+
+
 
 function renderIcon(icon) {
   return () => h(NIcon, null, { default: () => h(icon) });
@@ -62,11 +54,33 @@ const menuOptions = [
     key: "json2table",
     icon: renderIcon(GridOutline),
   },
+  {
+    label: "Json Convert",
+    key: "jsonConvertor",
+    icon: renderIcon(GridOutline),
+  }
 ];
 
+const current_view = ref('jsonConvertor')
+
+
 const siderOpen = ref(false);
-function toggleSider() {
-  siderOpen.value = !siderOpen.value;
+
+
+function handleApp(key: string, item:string){
+  console.log(key)
+  
+  current_view.value = key;
+}
+
+function main_view_render(): JSX.Element {
+  const main_view = {
+    "json2table": <JsonTable ></JsonTable>,
+    "jsonConvertor":<JsonConvertor></JsonConvertor>
+  }
+
+
+  return main_view[current_view.value];
 }
 </script>
 
@@ -91,33 +105,8 @@ footer {
   background-color: lightblue;
 }
 
-.n-layout-sider .n-layout-toggle-button {
-  display: none;
-}
+
 .n-scrollbar {
   overflow: visible;
-}
-
-.toggle-button {
-  transition: color 0.3s var(--n-bezier), right 0.3s var(--n-bezier),
-    left 0.3s var(--n-bezier), border-color 0.3s var(--n-bezier),
-    background-color 0.3s var(--n-bezier);
-  cursor: pointer;
-  width: 24px;
-  height: 24px;
-  position: absolute;
-  top: 50%;
-  right: 0;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  color: var(--n-toggle-button-icon-color);
-  border: var(--n-toggle-button-border);
-  background-color: var(--n-toggle-button-color);
-  box-shadow: 0 2px 4px 0px rgba(0, 0, 0, 0.06);
-  transform: translateX(50%) translateY(-50%);
-  z-index: 2;
 }
 </style>

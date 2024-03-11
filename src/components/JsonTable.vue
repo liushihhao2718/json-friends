@@ -40,7 +40,7 @@
         <n-flex vertical style="height: 100%; width: 100%; overflow: scroll;">
         <div style="display: block;width: calc(100% - 20px);margin: 10px auto;">
           <n-flex style="flex-direction: row;">
-            <n-select id="test" v-model:value="query_current_select" 
+            <n-select v-model:value="query_current_select" 
               v-bind:style="{
                 width: `calc(${Math.max(...query_options.map(q => q.label.length))/1.3}rem)`,
               }"
@@ -447,7 +447,13 @@ function obj2Table(obj: any) {
   }
 }
 
-
+function sameArrayField(arr: Array<any>) {
+  return arr
+    .map(obj => Object.keys(obj).join('|'))
+    .every((val, i, arr) => val === arr[0] )
+    && !Array.isArray(arr[0])
+    && arr.length > 1
+}
 
 function isPrimitive(str) {
   return [
@@ -497,13 +503,7 @@ function json_table_render(pointer_str:string, target_obj:Object){
 
 }
 
-function sameArrayField(arr: Array<any>) {
-  return arr
-    .map(obj => Object.keys(obj).join('|'))
-    .every((val, i, arr) => val === arr[0] )
-    && !Array.isArray(arr[0])
-    && arr.length > 1
-}
+
 </script>
 <style>
 :root {
