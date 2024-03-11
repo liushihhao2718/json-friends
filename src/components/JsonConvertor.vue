@@ -62,14 +62,14 @@ import {
   NGi,
 } from "naive-ui";
 import { Play } from "@vicons/ionicons5";
-import { ref, h, computed, watch } from "vue";
+import { ref, watch } from "vue";
 import JSON5 from "json5";
 import json2csv from "../lib/json2csv.js";
 import json2jsdoc from "../lib/json2jsdoc.js";
 
 const json_str = ref("");
 const run_str = ref("");
-const result_str = ref("result_str");
+const result_str = ref("");
 const auto_run = ref(false);
 const query_current_select = ref("jsdoc");
 const query_options = [
