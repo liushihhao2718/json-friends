@@ -56,7 +56,7 @@ const menuOptions = [
   },
 ];
 
-const current_view = ref("jsonConvertor");
+const current_view = ref("json2table");
 
 const siderOpen = ref(false);
 

@@ -52,7 +52,7 @@
               :input-props="{
                 autocomplete: 'disabled'
               }"
-              :options="search_auto_complete_options"
+              :options="search_auto_complete_options()"
               placeholder="JSON Pointer e.g. /foo/bar/0"
               clearable
             />
@@ -130,17 +130,17 @@
             </n-collapse-item>
           </n-collapse>
 
-          <component style="margin: 1rem auto; display: block;" :is="() => json_table_render(search_str, table_data)" />
+          <component style="margin: 1rem auto; display: block;" :is="() => search_path_table_render()" />
 
-          <div
+          <!-- <div
             style="margin-top: 5px;"
             v-if="search_value?.length > 0">
-            <label>JSON</label>
+            <label>JSON</label> -->
             <n-input
               v-model:value="search_value"
               type="textarea"
             />
-          </div>
+          <!-- </div> -->
           
         </div>
       </n-flex>
@@ -164,6 +164,8 @@ import sidebar_right_svg from "../assets/icon/sidebar-right.svg";
 const auto_run = ref(false);
 const run_str = ref(localStorage.getItem("input_str")||"");
 let table_data = ref(null);
+const sub_value = ref(null);
+
 const input_str = ref('');
 
 
@@ -178,23 +180,24 @@ const query_options = [ {
 const query_current_select = ref(query_options[0].value);
 
 const search_str = ref("");
-const search_auto_complete_options = computed(()=>{
+const search_auto_complete_options = ()=>{
 
   if(query_current_select.value === 'JSON Pointer'){
     const search = search_str.value == '/' ? '' : search_str.value;
-    const sub_value = save_json_pointer_get(search, table_data.value);
+    sub_value.value = save_json_pointer_get(search, table_data.value);
 
-    if(!sub_value) return []
+    if(!sub_value.value) return []
 
     console.log('sub_value', sub_value)
-    if(Array.isArray(sub_value)){
+    if(Array.isArray(sub_value.value)){
       return [search + '/0']
     }
 
-    return Object.keys(sub_value).map(key => search + '/' + key)
+    return Object.keys(sub_value.value).map(key => search + '/' + key)
   }
   
-})
+  return []
+}
 
 watch([run_str, auto_run], async (old_value, new_value)=>{
   if(auto_run.value)
@@ -468,7 +471,29 @@ function isPrimitive(str) {
   ].includes(typeof str);
 }
 
+watch([search_str, query_current_select], async (old_value, new_value)=>{
+  try{
+    let pointer_obj;
 
+    switch (query_current_select.value) {
+      case 'JSON Pointer':
+      pointer_obj = json_pointer.get(sub_value.value, search_str.value);
+        break;
+      case 'JSON Path':
+        pointer_obj = jp.query(sub_value.value, search_str.value)
+        break;
+      default:
+        break;
+    }
+
+    sub_value.value = pointer_obj;
+    search_value.value = JSON.stringify(pointer_obj);
+
+  }catch(e){
+    search_value.value = e.toString();
+  }
+  
+})
 function save_json_pointer_get(pointer_str, target_obj ){
   try{
     const pointer_obj = json_pointer.get(target_obj, pointer_str);
@@ -477,26 +502,15 @@ function save_json_pointer_get(pointer_str, target_obj ){
     return undefined;
   }
 }
-function json_table_render(pointer_str:string, target_obj:Object){
+function search_path_table_render(){
   try{
-    if(!target_obj) return <p>empty object</p>
+    if(!sub_value.value) return <p>empty object</p>
 
-    let pointer_obj;
-
-    switch (query_current_select.value) {
-      case 'JSON Pointer':
-      pointer_obj = json_pointer.get(target_obj, pointer_str);
-        break;
-      case 'JSON Path':
-      pointer_obj = jp.query(target_obj, pointer_str)
-      default:
-        break;
-    }
-    search_value.value = JSON.stringify(pointer_obj);
-    return table_render(obj2Table(pointer_obj));
+   
+    return table_render(obj2Table(sub_value.value));
   }
   catch(e){
-    search_value.value = e;
+    // search_value.value = e;
 
     return <p>{e.toString()}</p>
   }

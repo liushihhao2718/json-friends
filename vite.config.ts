@@ -7,7 +7,8 @@ import vueJsx from '@vitejs/plugin-vue-jsx'
 export default defineConfig({
   plugins: [vue(), vueJsx()],
   build: {
-    outDir:'./docs'
+    outDir:'./docs',
+    sourcemap: true
   },
   base: '/json-friends'
 })
