@@ -33,7 +33,35 @@ function jsdoc_gen(k, v) {
         ` */`].join('\n')
     )
   }
+  else if(Array.isArray(v)){
+    if (v.length == 1) {
+      if (isPrimitive(v[0])) {
+        return ` * @property {${v[0]}[]} ${k}`;
+      }
+      else {
+        const new_key = firstLetterUpperCase(k);
+        levels.push([new_key, v[0]])
+        return ` * @property {${new_key}[]} ${k}`;
+      }
+    }
 
+    else {
+      const types = v.map((x, i) => {
+        if (!isPrimitive(x)) {
+          const new_key = firstLetterUpperCase(k) + '_'+i;
+          levels.push([new_key, x])
+          return new_key
+        }
+        else return x;
+      })
+
+      typedef_comments.push(
+        [`/**`, 
+        ` * @typedef {Array<${types.join(' | ')}>} ${k}`,
+          ` */`].join('\n')
+      )
+    }
+  }
   else {
 
     typedef_comments.push(
@@ -53,15 +81,15 @@ function jsdoc_gen(k, v) {
             }
 
             else {
-              const types = v_in.map(x => {
-                if (!isPrimitive(v_in)) {
-                  const new_key = firstLetterUpperCase(k_in);
-                  levels.push([new_key, v_in])
+              const types = v_in.map((x, i) => {
+                if (!isPrimitive(x)) {
+                  const new_key = firstLetterUpperCase(k_in) + '_'+i;
+                  levels.push([new_key, x])
                   return new_key
                 }
                 else return x;
               })
-              return ` * @property {[${types.join('|')}]} ${k_in}`;
+              return ` * @property {Array<${types.join(' | ')}>} ${k_in}`;
             }
 
           }
@@ -102,7 +130,7 @@ function objectKey(obj, depth = 0) {
     }
 
     const array_result = []
-    obj.forEach(o => {
+    obj.forEach((o, i) => {
       const key = objectKey(o, depth++)
 
       if (array_result.find(x => deepEqual(x, key))) return;

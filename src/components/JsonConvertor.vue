@@ -68,7 +68,7 @@ import json2csv from "../lib/json2csv.js";
 import json2jsdoc from "../lib/json2jsdoc.js";
 
 const json_str = ref("");
-const run_str = ref("");
+const run_str = ref(localStorage.getItem("input_str") || "");
 const result_str = ref("");
 const auto_run = ref(false);
 const query_current_select = ref("jsdoc");
@@ -83,16 +83,23 @@ const query_options = [
   },
 ];
 function run() {
-  json_str.value = run_str.value;
-  const obj = JSON5.parse(json_str.value);
+  try{
+    const obj = JSON5.parse(run_str.value);
+    json_str.value = JSON.stringify(obj, null, 2);
 
-  if (query_current_select.value == "csv") {
-    const csv = json2csv(obj);
-    result_str.value = csv
+    if (query_current_select.value == "csv") {
+      const csv = json2csv(obj);
+      result_str.value = csv
+    }
+    else if(query_current_select.value = "jsdoc"){
+      const jsdoc = json2jsdoc(obj);
+      result_str.value = jsdoc
+    }
+    localStorage.setItem("input_str", json_str.value);
   }
-  else if(query_current_select.value = "jsdoc"){
-    const jsdoc = json2jsdoc(obj);
-    result_str.value = jsdoc
+  catch(e){
+    result_str.value = e.toString()
+
   }
 }
 
