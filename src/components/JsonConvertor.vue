@@ -1,48 +1,36 @@
 <template>
   <n-flex vertical style="width: 100%; overflow: scroll; gap: 0">
-    <n-flex
-      style="
+    <n-flex style="
         padding: 4px 6px;
         flex-grow: 1;
         border-bottom: 1px solid var(--n-border-color);
-      "
-    >
+      ">
       <n-grid x-gap="8" :cols="2">
         <n-gi>
           <n-flex justify="start" style="column-gap: 2px; align-items: center">
-            <n-button @click="run()"
-              >Run <n-icon size="20" style="margin-left: 5px"> <play /> </n-icon
-            ></n-button>
+            <n-button @click="run()">Run <n-icon size="20" style="margin-left: 5px">
+                <play />
+              </n-icon></n-button>
             <n-checkbox size="small" label="auto" v-model:checked="auto_run" />
           </n-flex>
         </n-gi>
         <n-gi style="display: block">
-          <n-select
-            style="width: 150px"
-            v-model:value="query_current_select"
-            :options="query_options"
-          ></n-select>
+          <n-select style="width: 150px" v-model:value="query_current_select" :options="query_options"></n-select>
         </n-gi>
       </n-grid>
     </n-flex>
 
     <splitpanes style="height: calc(100% - var(--header-height))">
       <pane :size="50">
-        <n-input
-          style="height: 100%; overflow: scroll"
-          v-model:value="run_str"
-          type="textarea"
-          placeholder='JSON Text { "a" : "123" }'
-        />
+        <n-input class="code_text"
+        style="height: 100%; overflow: scroll" v-model:value="run_str" type="textarea"
+          placeholder='JSON Text { "a" : "123" }' />
       </pane>
 
       <pane :size="50" style="height: 100%; align-items: flex-start">
         <n-flex vertical style="height: 100%; width: 100%; overflow: scroll">
-          <n-input
-            style="height: 100%; overflow: scroll"
-            v-model:value="result_str"
-            type="textarea"
-          />
+          <n-input class="code_text"
+          style="height: 100%; overflow: scroll" v-model:value="result_str" type="textarea" />
         </n-flex>
       </pane>
     </splitpanes>
@@ -64,14 +52,43 @@ import {
 import { Play } from "@vicons/ionicons5";
 import { ref, watch } from "vue";
 import JSON5 from "json5";
-import json2csv from "../lib/json2csv.js";
-import json2jsdoc from "../lib/json2jsdoc.js";
+
+
+
+async function quicktypeJSON(targetLanguage, typeName, jsonString) {
+
+  const {
+    quicktype,
+    InputData,
+    jsonInputForTargetLanguage,
+    JSONSchemaInput,
+    FetchingJSONSchemaStore
+} =await import( "quicktype-core");
+  
+    const jsonInput = jsonInputForTargetLanguage(targetLanguage);
+
+    // We could add multiple samples for the same desired
+    // type, or many sources for other types. Here we're
+    // just making one type from one piece of sample JSON.
+    await jsonInput.addSource({
+        name: typeName,
+        samples: [jsonString]
+    });
+
+    const inputData = new InputData();
+    inputData.addInput(jsonInput);
+
+    return await quicktype({
+        inputData,
+        lang: targetLanguage
+    });
+}
 
 const json_str = ref("");
 const run_str = ref(localStorage.getItem("input_str") || "");
 const result_str = ref("");
 const auto_run = ref(false);
-const query_current_select = ref("jsdoc");
+const query_current_select = ref("JsonSchema");
 const query_options = [
   {
     label: "CSV",
@@ -81,29 +98,47 @@ const query_options = [
     label: "JsDoc",
     value: "jsdoc",
   },
+  {
+    label: "JSON Schema",
+    value: "JsonSchema",
+  },
+  {
+    label: "TypeScript",
+    value: "typescript",
+  },
 ];
-function run() {
-  try{
+async function run() {
+  try {
     const obj = JSON5.parse(run_str.value);
     json_str.value = JSON.stringify(obj, null, 2);
 
     if (query_current_select.value == "csv") {
+      const { default: json2csv } = await import("../lib/json2csv.js");
       const csv = json2csv(obj);
       result_str.value = csv
     }
-    else if(query_current_select.value = "jsdoc"){
+    else if (query_current_select.value == "jsdoc") {
+      const { default: json2jsdoc } = await import("../lib/json2jsdoc.js");
       const jsdoc = json2jsdoc(obj);
       result_str.value = jsdoc
     }
+    else if (query_current_select.value == "JsonSchema") {
+      const { lines: pythonPerson } = await quicktypeJSON("JSON Schema", "Object", json_str.value);
+      result_str.value = pythonPerson.join('\n')
+    }
+    else if (query_current_select.value == "typescript") {
+      const { lines: pythonPerson } = await quicktypeJSON("TypeScript", "Object", json_str.value);
+      result_str.value = pythonPerson.join('\n')
+    }
     localStorage.setItem("input_str", json_str.value);
   }
-  catch(e){
+  catch (e) {
     result_str.value = e.toString()
 
   }
 }
 
-watch([run_str, auto_run], async (old_value, new_value) => {
+watch([run_str, auto_run, query_current_select], async (old_value, new_value) => {
   if (auto_run.value) run();
 });
 </script>
@@ -112,6 +147,7 @@ watch([run_str, auto_run], async (old_value, new_value) => {
   --header-height: 43px;
   --n-border-color: rgb(239, 239, 245);
 }
+
 .splitpanes__pane {
   display: flex;
   justify-content: center;
@@ -120,7 +156,8 @@ watch([run_str, auto_run], async (old_value, new_value) => {
   color: gray;
   flex-grow: 1;
 }
-.splitpanes--vertical > .splitpanes__splitter {
+
+.splitpanes--vertical>.splitpanes__splitter {
   width: 5px;
   background-color: darkgray;
   flex-shrink: 0;
@@ -131,6 +168,7 @@ watch([run_str, auto_run], async (old_value, new_value) => {
   overflow-y: scroll;
   display: block;
 }
+
 .n-table {
   width: fit-content;
   margin: auto;
@@ -139,9 +177,11 @@ watch([run_str, auto_run], async (old_value, new_value) => {
 .n-table.n-table--bordered tr:last-child td {
   border-bottom: 1px solid var(--n-border-color);
 }
+
 td:first-child {
   width: 10%;
 }
+
 div.fragment {
   margin: 4px 8px 4px 2px;
   background-color: #f8f8f8;
@@ -166,5 +206,8 @@ div.line {
   padding-left: 53px;
   padding-bottom: 0px;
   margin: 0px;
+}
+.code_text{
+  font-family: Menlo, Monaco, 'Courier New', monospace
 }
 </style>

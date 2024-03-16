@@ -14,11 +14,15 @@
     "json5": "^2.2.3",
     "jsonpath": "^1.1.1",
     "naive-ui": "^2.38.0",
+    "quicktype": "^23.0.106",
     "splitpanes": "^3.1.5",
     "vue": "^3.4.19",
     "vue-router": "4"
   },
   "devDependencies": {
+    "@types/json-pointer": "^1.0.34",
+    "@types/jsonpath": "^0.2.4",
+    "@types/splitpanes": "^2.2.6",
     "@vitejs/plugin-vue": "^5.0.4",
     "@vitejs/plugin-vue-jsx": "^3.1.0",
     "eslint": "^8.57.0",

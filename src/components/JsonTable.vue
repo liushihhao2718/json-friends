@@ -24,7 +24,8 @@
 
     <splitpanes style="height: calc(100% - var(--header-height));">
       <pane :size="pannels[0].size">
-        <n-input style="height: 100%; overflow: scroll" v-model:value="run_str" type="textarea"
+        <n-input class="code_text"
+        style="height: 100%; overflow: scroll" v-model:value="run_str" type="textarea"
           placeholder='JSON Text { "a" : "123" }' />
       </pane>
       <pane :size="pannels[1].size" class="json_table">
@@ -121,12 +122,10 @@
 
             <component style="margin: 1rem auto; display: block;" :is="() => search_path_table_render()" />
 
-            <!-- <div
-            style="margin-top: 5px;"
-            v-if="search_value?.length > 0">
-            <label>JSON</label> -->
-            <n-input v-model:value="search_value" type="textarea" />
-            <!-- </div> -->
+            <div style="margin-top: 5px;" v-if="search_value?.length > 0">
+              <label>JSON</label>
+              <n-input class="code_text" v-model:value="search_value" type="textarea" />
+            </div>
 
           </div>
         </n-flex>
@@ -139,7 +138,7 @@ import { Splitpanes, Pane } from "splitpanes";
 import "splitpanes/dist/splitpanes.css";
 import { NButton, NFlex, NInput, NIcon, NTable, NAutoComplete, NCollapse, NCollapseItem, NCard, NCheckbox, NSelect, NA } from "naive-ui";
 import { Play } from "@vicons/ionicons5";
-import { ref, h, computed, watch } from "vue";
+import { ref, h, watch, Ref } from "vue";
 import JSON5 from "json5";
 import json_pointer from "json-pointer";
 import jp from "jsonpath";
@@ -196,7 +195,14 @@ function run() {
 
 const search_value = ref('')
 
-const json_table_pannels = JSON.parse(
+
+export interface Table_pannel {
+    close:        boolean;
+    size:         number;
+    default_size: number;
+}
+
+const json_table_pannels: Table_pannel[] = JSON.parse(
   localStorage.getItem("json_table_pannels") ||
   JSON.stringify([
     {
@@ -249,12 +255,14 @@ function json_render(str: string) {
     search_str.value = search_str.value + '';
   } catch (e) {
     table_data.value = null;
+
+    return;
   }
   return table_render_click(obj2Table(table_data.value));
 }
 
 
-function update_search(e, json_pointer) {
+function update_search(e:Event, json_pointer:string) {
   e.stopPropagation();
   query_current_select.value = 'JSON Pointer';
   sub_value.value = save_json_pointer_get(json_pointer, table_data.value);
@@ -262,7 +270,8 @@ function update_search(e, json_pointer) {
 
   console.log(json_pointer);
 }
-function table_render_click(obj, json_pointer = '') {
+function table_render_click(obj?:{type:string, value:any}, json_pointer = '') {
+
   if (obj.type == "Array") {
     return (
       <NTable single-line={false} size="small" data-pointer={json_pointer}>
@@ -335,7 +344,8 @@ function table_render_click(obj, json_pointer = '') {
       {obj.value.toString()}</span>;
 }
 
-function table_render(obj) {
+function table_render(obj:{type:string, value:any}) {
+
   if (obj.type == "Array") {
     return (
       <NTable single-line={false} size="small">
@@ -406,7 +416,7 @@ function table_render(obj) {
 
   if (obj.type == "Primitive") return h("span", obj.value.toString());
 }
-function obj2Table(obj: any) {
+function obj2Table(obj: any):{type:string, value:any} | undefined {
   if (obj === null) return {
     type: "Primitive",
     value: 'null',
@@ -467,7 +477,7 @@ watch([search_str, query_current_select], async (old_value, new_value) => {
 
     switch (query_current_select.value) {
       case 'JSON Pointer':
-        pointer_obj = json_pointer.get(table_data.value, search_str.value);
+        pointer_obj = json_pointer.get(table_data.value || {}, search_str.value);
         break;
       case 'JSON Path':
         pointer_obj = jp.query(table_data.value, search_str.value)
@@ -484,7 +494,7 @@ watch([search_str, query_current_select], async (old_value, new_value) => {
   }
 
 })
-function save_json_pointer_get(pointer_str, target_obj) {
+function save_json_pointer_get(pointer_str:string, target_obj) {
   try {
     const pointer_obj = json_pointer.get(target_obj, pointer_str);
     return pointer_obj;
@@ -573,5 +583,9 @@ div.line {
   padding-left: 53px;
   padding-bottom: 0px;
   margin: 0px;
+}
+
+.code_text{
+  font-family: Menlo, Monaco, 'Courier New', monospace
 }
 </style>
