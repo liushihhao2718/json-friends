@@ -22,15 +22,14 @@
 
     <splitpanes style="height: calc(100% - var(--header-height))">
       <pane :size="50">
-        <n-input class="code_text"
-        style="height: 100%; overflow: scroll" v-model:value="run_str" type="textarea"
+        <n-input class="code_text" style="height: 100%; overflow: scroll" v-model:value="run_str" type="textarea"
           placeholder='JSON Text { "a" : "123" }' />
       </pane>
 
       <pane :size="50" style="height: 100%; align-items: flex-start">
         <n-flex vertical style="height: 100%; width: 100%; overflow: scroll">
-          <n-input class="code_text"
-          style="height: 100%; overflow: scroll" v-model:value="result_str" type="textarea" />
+          <n-input class="code_text" style="height: 100%; overflow: scroll" v-model:value="result_str"
+            type="textarea" />
         </n-flex>
       </pane>
     </splitpanes>
@@ -50,7 +49,7 @@ import {
   NGi,
 } from "naive-ui";
 import { Play } from "@vicons/ionicons5";
-import { ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 import JSON5 from "json5";
 
 
@@ -63,31 +62,31 @@ async function quicktypeJSON(targetLanguage, typeName, jsonString) {
     jsonInputForTargetLanguage,
     JSONSchemaInput,
     FetchingJSONSchemaStore
-} =await import( "quicktype-core");
-  
-    const jsonInput = jsonInputForTargetLanguage(targetLanguage);
+  } = await import("quicktype-core");
 
-    // We could add multiple samples for the same desired
-    // type, or many sources for other types. Here we're
-    // just making one type from one piece of sample JSON.
-    await jsonInput.addSource({
-        name: typeName,
-        samples: [jsonString]
-    });
+  const jsonInput = jsonInputForTargetLanguage(targetLanguage);
 
-    const inputData = new InputData();
-    inputData.addInput(jsonInput);
+  // We could add multiple samples for the same desired
+  // type, or many sources for other types. Here we're
+  // just making one type from one piece of sample JSON.
+  await jsonInput.addSource({
+    name: typeName,
+    samples: [jsonString]
+  });
 
-    return await quicktype({
-        inputData,
-        lang: targetLanguage
-    });
+  const inputData = new InputData();
+  inputData.addInput(jsonInput);
+
+  return await quicktype({
+    inputData,
+    lang: targetLanguage
+  });
 }
 
 const json_str = ref("");
 const run_str = ref(localStorage.getItem("input_str") || "");
 const result_str = ref("");
-const auto_run = ref(false);
+const auto_run = ref(JSON.parse(localStorage.getItem("jsonConvertor_auto") || 'false'));
 const query_current_select = ref("JsonSchema");
 const query_options = [
   {
@@ -138,6 +137,12 @@ async function run() {
   }
 }
 
+onMounted(()=>{
+  if (auto_run.value) run();
+})
+watch([auto_run], async () => {
+  localStorage.setItem("jsonConvertor_auto", auto_run.value.toString());
+})
 watch([run_str, auto_run, query_current_select], async (old_value, new_value) => {
   if (auto_run.value) run();
 });
@@ -207,7 +212,8 @@ div.line {
   padding-bottom: 0px;
   margin: 0px;
 }
-.code_text{
+
+.code_text {
   font-family: Menlo, Monaco, 'Courier New', monospace
 }
 </style>

@@ -138,7 +138,7 @@ import { Splitpanes, Pane } from "splitpanes";
 import "splitpanes/dist/splitpanes.css";
 import { NButton, NFlex, NInput, NIcon, NTable, NAutoComplete, NCollapse, NCollapseItem, NCard, NCheckbox, NSelect, NA } from "naive-ui";
 import { Play } from "@vicons/ionicons5";
-import { ref, h, watch, Ref } from "vue";
+import { ref, h, watch, onMounted } from "vue";
 import JSON5 from "json5";
 import json_pointer from "json-pointer";
 import jp from "jsonpath";
@@ -146,7 +146,7 @@ import jp from "jsonpath";
 import sidebar_left_svg from "../assets/icon/sidebar-left.svg";
 import sidebar_right_svg from "../assets/icon/sidebar-right.svg";
 
-const auto_run = ref(false);
+const auto_run = ref(JSON.parse(localStorage.getItem("json2table_auto") || 'false'));
 const run_str = ref(localStorage.getItem("input_str") || "");
 let table_data = ref(null);
 const sub_value = ref(null);
@@ -184,6 +184,12 @@ const search_auto_complete_options = () => {
   return []
 }
 
+onMounted(()=>{
+  if (auto_run.value) run();
+});
+watch([auto_run], async () => {
+  localStorage.setItem("json2table_auto", auto_run.value.toString());
+})
 watch([run_str, auto_run], async (old_value, new_value) => {
   if (auto_run.value)
     run();
