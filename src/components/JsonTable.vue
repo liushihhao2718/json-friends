@@ -22,16 +22,15 @@
       </n-button>
     </n-flex>
 
-    <splitpanes style="height: calc(100% - var(--header-height));">
+    <splitpanes :horizontal="isMobile()" style="height: calc(100% - var(--header-height));">
       <pane :size="pannels[0].size">
-        <n-input class="code_text"
-        style="height: 100%; overflow: scroll" v-model:value="run_str" type="textarea"
+        <n-input class="code_text" style="height: 100%; overflow: scroll" v-model:value="run_str" type="textarea"
           placeholder='JSON Text { "a" : "123" }' />
       </pane>
       <pane :size="pannels[1].size" class="json_table">
         <component :is="() => json_render(input_str)" />
       </pane>
-      <pane :size="pannels[2].size" style="height: 100%; align-items: flex-start;">
+      <pane :size="pannels[2].size" style="align-items: flex-start;">
         <n-flex vertical style="height: 100%; width: 100%; overflow: scroll;">
           <div style="display: block;width: calc(100% - 20px);margin: 10px auto;">
             <n-flex style="flex-direction: row;">
@@ -184,7 +183,7 @@ const search_auto_complete_options = () => {
   return []
 }
 
-onMounted(()=>{
+onMounted(() => {
   if (auto_run.value) run();
 });
 watch([auto_run], async () => {
@@ -195,6 +194,15 @@ watch([run_str, auto_run], async (old_value, new_value) => {
     run();
 })
 
+function isMobile() {
+  if (screen.width <= 760) {
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
 function run() {
   input_str.value = run_str.value;
 }
@@ -203,9 +211,9 @@ const search_value = ref('')
 
 
 export interface Table_pannel {
-    close:        boolean;
-    size:         number;
-    default_size: number;
+  close: boolean;
+  size: number;
+  default_size: number;
 }
 
 const json_table_pannels: Table_pannel[] = JSON.parse(
@@ -268,7 +276,7 @@ function json_render(str: string) {
 }
 
 
-function update_search(e:Event, json_pointer:string) {
+function update_search(e: Event, json_pointer: string) {
   e.stopPropagation();
   query_current_select.value = 'JSON Pointer';
   sub_value.value = save_json_pointer_get(json_pointer, table_data.value);
@@ -276,7 +284,7 @@ function update_search(e:Event, json_pointer:string) {
 
   console.log(json_pointer);
 }
-function table_render_click(obj?:{type:string, value:any}, json_pointer = '') {
+function table_render_click(obj?: { type: string, value: any }, json_pointer = '') {
 
   if (obj.type == "Array") {
     return (
@@ -350,7 +358,7 @@ function table_render_click(obj?:{type:string, value:any}, json_pointer = '') {
       {obj.value.toString()}</span>;
 }
 
-function table_render(obj:{type:string, value:any}) {
+function table_render(obj: { type: string, value: any }) {
 
   if (obj.type == "Array") {
     return (
@@ -422,7 +430,7 @@ function table_render(obj:{type:string, value:any}) {
 
   if (obj.type == "Primitive") return h("span", obj.value.toString());
 }
-function obj2Table(obj: any):{type:string, value:any} | undefined {
+function obj2Table(obj: any): { type: string, value: any } | undefined {
   if (obj === null) return {
     type: "Primitive",
     value: 'null',
@@ -500,7 +508,7 @@ watch([search_str, query_current_select], async (old_value, new_value) => {
   }
 
 })
-function save_json_pointer_get(pointer_str:string, target_obj) {
+function save_json_pointer_get(pointer_str: string, target_obj) {
   try {
     const pointer_obj = json_pointer.get(target_obj, pointer_str);
     return pointer_obj;
@@ -548,7 +556,7 @@ function search_path_table_render() {
 
 .json_table {
   /* font-size: 16px; */
-  overflow-y: scroll;
+  overflow: scroll;
   display: block;
 }
 
@@ -591,7 +599,7 @@ div.line {
   margin: 0px;
 }
 
-.code_text{
+.code_text {
   font-family: Menlo, Monaco, 'Courier New', monospace
 }
 </style>

@@ -20,7 +20,7 @@
       </n-grid>
     </n-flex>
 
-    <splitpanes style="height: calc(100% - var(--header-height))">
+    <splitpanes :horizontal="isMobile()" style="height: calc(100% - var(--header-height))">
       <pane :size="50">
         <n-input class="code_text" style="height: 100%; overflow: scroll" v-model:value="run_str" type="textarea"
           placeholder='JSON Text { "a" : "123" }' />
@@ -51,17 +51,20 @@ import {
 import { Play } from "@vicons/ionicons5";
 import { onMounted, ref, watch } from "vue";
 import JSON5 from "json5";
-
-
-
+function isMobile() {
+  if (screen.width <= 760) {
+    return true;
+  }
+  else {
+    return false;
+  }
+}
 async function quicktypeJSON(targetLanguage, typeName, jsonString) {
 
   const {
     quicktype,
     InputData,
-    jsonInputForTargetLanguage,
-    JSONSchemaInput,
-    FetchingJSONSchemaStore
+    jsonInputForTargetLanguage
   } = await import("quicktype-core");
 
   const jsonInput = jsonInputForTargetLanguage(targetLanguage);
