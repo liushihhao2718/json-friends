@@ -15,7 +15,6 @@
 </template>
 
 <script setup lang="tsx">
-import window_grid from "./assets/icon/window-grid.svg";
 import { NFlex, NLayout, NLayoutSider, NIcon, NMenu } from "naive-ui";
 import { RouterView, RouterLink } from 'vue-router';
 import { h, ref } from "vue";
@@ -29,7 +28,10 @@ const menuOptions = [
   {
     label: () => <RouterLink to={{ path: "/json2table" }}>json to table</RouterLink>,
     key: "json2table",
-    icon: renderIcon(<img src={window_grid} style="width: 100%;"></img>),
+    icon: renderIcon(
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M21,2H3A1,1,0,0,0,2,3V21a1,1,0,0,0,1,1H21a1,1,0,0,0,1-1V3A1,1,0,0,0,21,2ZM8,20H4V4H8Zm12,0H10V13H20Zm0-9H10V4H20Z" />
+    </svg>),
   },
   {
     label: () => <RouterLink to={{ path: "/jsonConvertor" }}>json convertor</RouterLink>,

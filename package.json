@@ -9,7 +9,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@codemirror/lang-javascript": "^6.2.2",
+    "@codemirror/lang-json": "^6.0.1",
+    "@codemirror/theme-one-dark": "^6.1.2",
     "@vicons/ionicons5": "^0.12.0",
+    "codemirror": "^6.0.1",
     "json-pointer": "^0.6.2",
     "json5": "^2.2.3",
     "jsonpath": "^1.1.1",
@@ -17,6 +21,7 @@
     "quicktype": "^23.0.106",
     "splitpanes": "^3.1.5",
     "vue": "^3.4.19",
+    "vue-codemirror": "^6.1.1",
     "vue-router": "4"
   },
   "devDependencies": {

@@ -24,8 +24,10 @@
 
     <splitpanes :horizontal="isMobile()" style="height: calc(100% - var(--header-height));">
       <pane :size="pannels[0].size">
-        <n-input class="code_text" style="height: 100%; overflow: scroll" v-model:value="run_str" type="textarea"
-          placeholder='JSON Text { "a" : "123" }' />
+        <codemirror 
+          :extensions="extensions"
+          class="code_text" style="height: 100%;width: 100%; overflow: scroll" v-model="run_str"
+          type="textarea" placeholder='JSON Text { "a" : "123" }' />
       </pane>
       <pane :size="pannels[1].size" class="json_table">
         <component :is="() => json_render(input_str)" />
@@ -145,6 +147,12 @@ import jp from "jsonpath";
 import sidebar_left_svg from "../assets/icon/sidebar-left.svg";
 import sidebar_right_svg from "../assets/icon/sidebar-right.svg";
 
+import { Codemirror } from 'vue-codemirror';
+import { javascript } from '@codemirror/lang-javascript';
+import { EditorView } from "codemirror";
+// import { oneDark } from '@codemirror/theme-one-dark'
+
+const extensions = [javascript(), EditorView.lineWrapping]
 const auto_run = ref(JSON.parse(localStorage.getItem("json2table_auto") || 'false'));
 const run_str = ref(localStorage.getItem("input_str") || "");
 let table_data = ref(null);

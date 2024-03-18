@@ -22,13 +22,17 @@
 
     <splitpanes :horizontal="isMobile()" style="height: calc(100% - var(--header-height))">
       <pane :size="50">
-        <n-input class="code_text" style="height: 100%; overflow: scroll" v-model:value="run_str" type="textarea"
+        <codemirror class="code_text" 
+          :extensions="extensions"
+          style="width: 100%; height: 100%; overflow: scroll" v-model="run_str" type="textarea"
           placeholder='JSON Text { "a" : "123" }' />
       </pane>
 
       <pane :size="50" style="height: 100%; align-items: flex-start">
         <n-flex vertical style="height: 100%; width: 100%; overflow: scroll">
-          <n-input class="code_text" style="height: 100%; overflow: scroll" v-model:value="result_str"
+          <codemirror class="code_text" 
+            :extensions="extensions"
+            style="height: 100%; overflow: scroll" v-model="result_str"
             type="textarea" />
         </n-flex>
       </pane>
@@ -51,6 +55,13 @@ import {
 import { Play } from "@vicons/ionicons5";
 import { onMounted, ref, watch } from "vue";
 import JSON5 from "json5";
+import { Codemirror } from 'vue-codemirror';
+import { javascript } from '@codemirror/lang-javascript';
+import { EditorView } from "codemirror";
+// import { oneDark } from '@codemirror/theme-one-dark'
+
+const extensions = [javascript(), EditorView.lineWrapping]
+
 function isMobile() {
   if (screen.width <= 760) {
     return true;
@@ -125,11 +136,11 @@ async function run() {
       result_str.value = jsdoc
     }
     else if (query_current_select.value == "JsonSchema") {
-      const { lines: pythonPerson } = await quicktypeJSON("JSON Schema", "Object", json_str.value);
+      const { lines: pythonPerson } = await quicktypeJSON("JSON Schema", "ObjectType", json_str.value);
       result_str.value = pythonPerson.join('\n')
     }
     else if (query_current_select.value == "typescript") {
-      const { lines: pythonPerson } = await quicktypeJSON("TypeScript", "Object", json_str.value);
+      const { lines: pythonPerson } = await quicktypeJSON("TypeScript", "ObjectType", json_str.value);
       result_str.value = pythonPerson.join('\n')
     }
     localStorage.setItem("input_str", json_str.value);
@@ -140,13 +151,13 @@ async function run() {
   }
 }
 
-onMounted(()=>{
+onMounted(() => {
   if (auto_run.value) run();
 })
 watch([auto_run], async () => {
   localStorage.setItem("jsonConvertor_auto", auto_run.value.toString());
 })
-watch([run_str, auto_run, query_current_select], async (old_value, new_value) => {
+watch([run_str, auto_run, query_current_select], async () => {
   if (auto_run.value) run();
 });
 </script>
@@ -217,6 +228,7 @@ div.line {
 }
 
 .code_text {
-  font-family: Menlo, Monaco, 'Courier New', monospace
+  /* font-family: Menlo, Monaco, 'Courier New', monospace */
+  width: 100%;
 }
 </style>

@@ -12,4 +12,3 @@ var Y=/[\u1680\u2000-\u200A\u202F\u205F\u3000]/,uu=/[\xAA\xB5\xBA\xC0-\xD6\xD8-\
 `+c,o=F.join(d);f=`[
 `+c+o+`,
 `+B+"]"}return m.pop(),c=B,f}};const nu={parse:eu,stringify:Eu};var iu=nu;export{iu as l};
-//# sourceMappingURL=json5-8HslT92O.js.map

@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [vue(), vueJsx()],
   build: {
     outDir: "./docs",
-    sourcemap: true,
+    // sourcemap: true,
     rollupOptions: {
       output: {
         manualChunks(id) {
