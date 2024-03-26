@@ -3,7 +3,7 @@
     <n-flex justify="space-between"
       style="padding: 4px 6px; flex-grow: 1;  border-bottom: 1px solid var(--n-border-color);">
       <n-flex justify="start" style="column-gap: 2px;align-items: center;">
-        <n-button @click="togglePannel(0)">
+        <n-button @click="togglePannel(0)" :tertiary="pannels[0].close">
           <n-icon size="24">
             <img :src="sidebar_left_svg" style="width: 100%;"></img>
           </n-icon>
@@ -15,24 +15,36 @@
 
       </n-flex>
 
-      <n-button justify="end" @click="togglePannel(2)">
-        <n-icon size="24">
-          <img :src="sidebar_right_svg" style="width: 100%;"></img>
-        </n-icon>
-      </n-button>
+      <n-flex>
+        <n-button justify="end" @click="() => { togglePannel(1); }"
+          :tertiary="!pannels[1].close">
+          <n-icon size="22">
+            <img :src="code_json_svg" style="width: 100%;"></img>
+          </n-icon>
+        </n-button>
+        <n-button justify="end" @click="togglePannel(3)" :tertiary="pannels[3].close">
+          <n-icon size="24">
+            <img :src="sidebar_right_svg" style="width: 100%;"></img>
+          </n-icon>
+        </n-button>
+      </n-flex>
     </n-flex>
 
     <splitpanes :horizontal="isMobile()" style="height: calc(100% - var(--header-height));">
-      <pane :size="pannels[0].size">
-        <codemirror 
-          :extensions="extensions"
-          class="code_text" style="height: 100%;width: 100%; overflow: scroll" v-model="run_str"
-          type="textarea" placeholder='JSON Text { "a" : "123" }' />
+      <pane v-if="!pannels[0].close">
+        <codemirror :extensions="extensions" class="code_text" style="height: 100%;width: 100%; overflow: scroll"
+          v-model="run_str" type="textarea" placeholder='JSON Text { "a" : "123" }' />
       </pane>
-      <pane :size="pannels[1].size" class="json_table">
+      <pane v-if="!pannels[1].close">
+        <codemirror :extensions="extensions" v-model="js_map_code" class="code_text"
+          style="height: 100%;width: 100%; overflow: scroll" type="textarea" />
+
+      </pane>
+
+      <pane class="json_table">
         <component :is="() => json_render(input_str)" />
       </pane>
-      <pane :size="pannels[2].size" style="align-items: flex-start;">
+      <pane v-if="!pannels[3].close" style="align-items: flex-start;">
         <n-flex vertical style="height: 100%; width: 100%; overflow: scroll;">
           <div style="display: block;width: calc(100% - 20px);margin: 10px auto;">
             <n-flex style="flex-direction: row;">
@@ -48,7 +60,8 @@
             <n-collapse>
               <n-collapse-item v-if="query_current_select == 'JSON Pointer'" title="What's JSON Pointer?" name="1">
                 <n-card title="Example">
-                  <p>A JSON Pointer is a list of zero-to-many tokens, each prefixed by <code>/</code>. Each token can be
+                  <p>A JSON Pointer is a list of zero-to-many tokens, each prefixed by <code>/</code>. Each token
+                    can be
                     a string or a number. For example, given a JSON: </p>
                   <div class="fragment">
                     <div class="line">{</div>
@@ -137,7 +150,7 @@
 <script setup lang="tsx">
 import { Splitpanes, Pane } from "splitpanes";
 import "splitpanes/dist/splitpanes.css";
-import { NButton, NFlex, NInput, NIcon, NTable, NAutoComplete, NCollapse, NCollapseItem, NCard, NCheckbox, NSelect, NA } from "naive-ui";
+import { NButton, NFlex, NInput, NIcon, NTable, NAutoComplete, NCollapse, NCollapseItem, NCard, NCheckbox, NSelect } from "naive-ui";
 import { Play } from "@vicons/ionicons5";
 import { ref, h, watch, onMounted } from "vue";
 import JSON5 from "json5";
@@ -146,20 +159,22 @@ import jp from "jsonpath";
 
 import sidebar_left_svg from "../assets/icon/sidebar-left.svg";
 import sidebar_right_svg from "../assets/icon/sidebar-right.svg";
+import code_json_svg from "../assets/icon/code-json.svg"
 
 import { Codemirror } from 'vue-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import { EditorView } from "codemirror";
-// import { oneDark } from '@codemirror/theme-one-dark'
 
 const extensions = [javascript(), EditorView.lineWrapping]
 const auto_run = ref(JSON.parse(localStorage.getItem("json2table_auto") || 'false'));
 const run_str = ref(localStorage.getItem("input_str") || "");
 let table_data = ref(null);
 const sub_value = ref(null);
-
 const input_str = ref('');
 
+const js_map_code = ref(
+  `// data.map( d => d.name )
+return data;`);
 
 const query_options = [{
   label: 'JSON Pointer',
@@ -169,6 +184,35 @@ const query_options = [{
   label: 'JSON Path',
   value: 'JSON Path',
 }]
+
+const json_table_pannels: Table_pannel[] = JSON.parse(
+  localStorage.getItem("json_table_pannels") ||
+  JSON.stringify([
+    {
+      close: false,
+      size: 30,
+      default_size: 30,
+    },
+    {
+      close: true,
+      size: 35,
+      default_size: 35,
+    },
+    {
+      close: false,
+      size: 35,
+      default_size: 35,
+    },
+    {
+      close: false,
+      size: 30,
+      default_size: 30,
+    },
+  ])
+);
+
+
+const pannels = ref(json_table_pannels);
 const query_current_select = ref(query_options[0].value);
 
 const search_str = ref("");
@@ -197,7 +241,7 @@ onMounted(() => {
 watch([auto_run], async () => {
   localStorage.setItem("json2table_auto", auto_run.value.toString());
 })
-watch([run_str, auto_run], async (old_value, new_value) => {
+watch([run_str, js_map_code, auto_run], async () => {
   if (auto_run.value)
     run();
 })
@@ -212,7 +256,21 @@ function isMobile() {
 }
 
 function run() {
-  input_str.value = run_str.value;
+  if (!pannels.value[1].close) {
+    try {
+      const compute_result = new Function(
+        'data', `${js_map_code.value}`
+      )(JSON5.parse(run_str.value));
+
+      input_str.value = JSON.stringify(compute_result)
+    } catch (e) {
+      console.log(e)
+    }
+
+  } else {
+    input_str.value = JSON.stringify(JSON5.parse(run_str.value))
+  }
+
 }
 
 const search_value = ref('')
@@ -224,57 +282,58 @@ export interface Table_pannel {
   default_size: number;
 }
 
-const json_table_pannels: Table_pannel[] = JSON.parse(
-  localStorage.getItem("json_table_pannels") ||
-  JSON.stringify([
-    {
-      close: false,
-      size: 30,
-      default_size: 30,
-    },
-    {
-      close: false,
-      size: 35,
-      default_size: 35,
-    },
-    {
-      close: false,
-      size: 30,
-      default_size: 30,
-    },
-  ])
-);
-const pannels = ref(json_table_pannels);
+
 
 async function togglePannel(index: number) {
   pannels.value[index].close = !pannels.value[index].close;
 
-  const col_size = pannels.value.map((p) => {
-    return p.close ? 0 : p.default_size;
-  });
+  const col_size = pannels.value[1].close ?
+    pannels.value.filter((x, i) => i != 1).map((p) => {
+      return p.close ? 0 : p.default_size;
+    })
+    : pannels.value.map((p) => {
+      return p.close ? 0 : p.default_size;
+    });
 
-  pannels.value.forEach((x, i) => {
-    x.size = size(i);
-  });
+
+  if (pannels.value[1].close) {
+    pannels.value.filter((x, i) => i != 1).forEach((x, i) => {
+      x.size = size(i);
+    });
+  } else {
+    pannels.value.forEach((x, i) => {
+      x.size = size(i);
+    });
+  }
+
+
 
   localStorage.setItem("json_table_pannels", JSON.stringify(pannels.value));
 
   function size(index: number) {
     const sum = col_size.reduce((a, b) => a + b, 0);
 
-    return Math.floor((col_size[index] / sum) * 100);
+    return Math.round((col_size[index] / sum) * 100);
   }
 }
 
 function json_render(str: string) {
   try {
-    table_data.value = JSON5.parse(str);
 
-    const formatted = JSON.stringify(table_data.value, null, 4);
-    run_str.value = formatted;
-    localStorage.setItem("input_str", str);
+    if (!pannels.value[1].close) {
+      table_data.value = JSON5.parse(str);
+      run_str.value = JSON.stringify(JSON.parse(run_str.value), null, 4);
+      localStorage.setItem("input_str", run_str.value);
 
-    search_str.value = search_str.value + '';
+    } else {
+      table_data.value = JSON5.parse(str);
+
+      run_str.value = JSON.stringify(JSON.parse(run_str.value), null, 4);
+      localStorage.setItem("input_str", str);
+
+      search_str.value = search_str.value + '';
+    }
+
   } catch (e) {
     table_data.value = null;
 
@@ -293,7 +352,7 @@ function update_search(e: Event, json_pointer: string) {
   console.log(json_pointer);
 }
 function table_render_click(obj?: { type: string, value: any }, json_pointer = '') {
-
+  if (!obj) return;
   if (obj.type == "Array") {
     return (
       <NTable single-line={false} size="small" data-pointer={json_pointer}>
@@ -367,7 +426,7 @@ function table_render_click(obj?: { type: string, value: any }, json_pointer = '
 }
 
 function table_render(obj: { type: string, value: any }) {
-
+  if (!obj) return;
   if (obj.type == "Array") {
     return (
       <NTable single-line={false} size="small">
@@ -480,7 +539,7 @@ function sameArrayField(arr: Array<any>) {
     && arr.length > 1
 }
 
-function isPrimitive(str) {
+function isPrimitive(str: any) {
   return [
     "string",
     "number",
@@ -493,7 +552,7 @@ function isPrimitive(str) {
   ].includes(typeof str);
 }
 
-watch([search_str, query_current_select], async (old_value, new_value) => {
+watch([search_str, query_current_select], async () => {
   try {
     let pointer_obj;
 
@@ -516,7 +575,7 @@ watch([search_str, query_current_select], async (old_value, new_value) => {
   }
 
 })
-function save_json_pointer_get(pointer_str: string, target_obj) {
+function save_json_pointer_get(pointer_str: string, target_obj: any) {
   try {
     const pointer_obj = json_pointer.get(target_obj, pointer_str);
     return pointer_obj;
@@ -554,6 +613,12 @@ function search_path_table_render() {
   font-family: Helvetica, Arial, sans-serif;
   color: gray;
   flex-grow: 1;
+}
+
+.splitpanes--horizontal>.splitpanes__splitter {
+  height: 5px;
+  background-color: darkgray;
+  flex-shrink: 0;
 }
 
 .splitpanes--vertical>.splitpanes__splitter {

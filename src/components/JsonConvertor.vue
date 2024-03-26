@@ -5,7 +5,7 @@
         flex-grow: 1;
         border-bottom: 1px solid var(--n-border-color);
       ">
-      <n-grid x-gap="8" :cols="2">
+      <n-grid x-gap="8" cols="2">
         <n-gi>
           <n-flex justify="start" style="column-gap: 2px; align-items: center">
             <n-button @click="run()">Run <n-icon size="20" style="margin-left: 5px">
@@ -45,7 +45,6 @@ import "splitpanes/dist/splitpanes.css";
 import {
   NButton,
   NFlex,
-  NInput,
   NIcon,
   NCheckbox,
   NSelect,
@@ -58,7 +57,6 @@ import JSON5 from "json5";
 import { Codemirror } from 'vue-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import { EditorView } from "codemirror";
-// import { oneDark } from '@codemirror/theme-one-dark'
 
 const extensions = [javascript(), EditorView.lineWrapping]
 
@@ -124,7 +122,7 @@ async function run() {
   try {
     const obj = JSON5.parse(run_str.value);
     json_str.value = JSON.stringify(obj, null, 2);
-
+    run_str.value = json_str.value
     if (query_current_select.value == "csv") {
       const { default: json2csv } = await import("../lib/json2csv.js");
       const csv = json2csv(obj);
